@@ -1,0 +1,16 @@
+usage example
+
+The program is coded in python, so ‌order to execute it, it's necesary to give
+execution permission to the file, or use the command python <file> <parameters>
+
+./planner.py <input file> 
+
+The input file should be in PDDL format, this input file is the one generated as
+the problem representation.
+
+The output solution is shown in the standard output. In case you need to get the
+solution in a file, the regular way is to redirect the output to a file
+e.g.
+ ./planner.py <input file>   >   output.pddl
+ 
+ * It's no necessary to input the domain file as it has been hardcoded into the program functions.

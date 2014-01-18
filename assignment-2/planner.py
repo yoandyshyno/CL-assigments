@@ -4,6 +4,7 @@
 # Mprimes problem
 
 import sys, re
+import copy
 
 def parse(f):
 	"""
@@ -47,10 +48,37 @@ def parse(f):
 	g = [map(int,x) for x in atc.findall(r.findall(t)[0][2])]
 	return (loc,veh,car,g)
 
-def genCC(mp):
-	for p in mp.veh:
-		pass
-	pass
+def genInstances(lmp):
+	ins = []
+	for mp in lmp:
+		for i in xrange(len(mp.veh)):
+			o1 = copy.deepcopy(mp)
+			lc = mp.veh[i][0]
+			(tol,tor) = (lc-1,lc+1)
+			if tol < 0:
+				tol = mp.n - 1
+			if tor >= mp.n:
+				tor = 0
+			o1.move(i,lc,tol)
+			o2 = copy.deepcopy(mp)
+			o2.move(i,lc,tor)
+			o3 = copy.deepcopy(mp)
+			for j in xrange(len(mp.car)):
+				if mp.car[j] == lc:
+					o3.load(j,i,lc)
+				if mp.car[j] == -1 and ([j,i] in mp._in):
+					o3.unload(j,i,lc)
+			ins = ins + [o1,o2,o3]
+	return ins
+	
+def checkGoals(lmp):
+	for mp in lmp:
+		flag = True
+		for c,l in mp.g:
+			flag = flag and (mp.car[c] == l)
+		if flag:
+			return (True, mp)
+	return (False, None)			
 
 class mprime(object):
 	"""
@@ -63,18 +91,6 @@ class mprime(object):
 		self._in = []
 		self.plan = []
 		self.n = len(self.loc)
-		self.optimize()
-
-	def optimize(self):
-		"""
-		This method remove every meaningless goal, that is if the cargo is already
-		in the location described by its corresponding goal.
-		"""
-		lg = []
-		for g in self.g:
-			if self.car[g[0]] != g[1]:
-				lg.append(g)
-		self.g = lg
 
 	def move(self,_veh, lfrom, lto):
 		"""
@@ -108,14 +124,16 @@ class mprime(object):
 
 	def load(self,_car, _veh, _loc):
 		sp = self.veh[_veh][1]
-		if self.car[_car] == _loc and self.veh[_veh][0] == _loc and sp:
+		if [_car,_loc] in self.g:
+			return True
+		if self.car[_car] == _loc and self.veh[_veh][0] == _loc and sp :
 			self.car[_car] = -1
 			self._in.append([_car,_veh])
 			self.veh[_veh][1] -= 1
 			self.plan.append("(load c%d v%d l%d s%d s%d)" % (_car,_veh,_loc,sp,sp-1))
 			return True
 		else:
-			print "Fail load"
+			#print "Fail load"
 			return False
 
 	def unload(self,_car, _veh, _loc):
@@ -148,19 +166,14 @@ class mprime(object):
 
 if __name__ == '__main__':
 	vrs = parse(sys.argv[1])
-	#print vrs
-
 	mp = mprime(vrs)
-	comb = []
-	
-	CC = genCC(mp)
+	goalAchieved = False
+	ins = [mp]
+
 	while not goalAchieved:
-		#CC = genCC(mp)
-		for c in CC:
-			if checkGoals(c):
-				goalAchieved = True
-				break
+		ins = genInstances(ins)
+		(goalAchieved, res) = checkGoals(ins)
 
 
-	for p in mp.plan:
+	for p in res.plan:
 		print p
